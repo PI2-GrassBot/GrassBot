@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel do Cortador de Grama</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+
+  <body data-api-url="{{ api_url }}">
+    <header>
+        <img src="{{ url_for('static', filename='../static/logo.jpeg') }}" alt="GrassBot" />
+    </header>
+
+    <div class="panel">
+
+      <button id="power-btn">Ligar</button>
+
+      <div>
+        <label for="altura-corte">Altura do Corte:</label>
+        <select id="altura-corte">
+          <option value="baixa">Baixa</option>
+          <option value="média" selected>Média</option>
+          <option value="alta">Alta</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="velocidade">Velocidade:</label>
+        <input type="range" id="velocidade" min="0" max="100" value="50" />
+        <span id="velocidade-valor">50</span>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
