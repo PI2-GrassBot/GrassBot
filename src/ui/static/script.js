@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     powerBtn.addEventListener("click", function () {
         ligado = !ligado;
         powerBtn.textContent = ligado ? "Desligar" : "Ligar";
-        powerBtn.classList.toggle("off", !ligado);
+        powerBtn.classList.toggle("off", ligado);
 
         fetch(`${API_URL}/ligar`, {
             method: "POST",
