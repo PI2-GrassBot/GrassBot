@@ -1,6 +1,5 @@
 import pygame
 import random
-
 import sys
 import os
 
@@ -16,26 +15,36 @@ TAMANHO_CORTADOR = 30
 COR_GRAMA = (34, 139, 34)  # Verde
 COR_CORTADOR = (255, 0, 0)  # Vermelho
 COR_OBSTACULO = (0, 0, 0)  # Preto
+COR_ESTACAO = (0, 0, 255)  # Azul
+COR_TEXTO = (255, 255, 255)  # Branco
 
 # Inicialização do pygame
 pygame.init()
 tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Emulador - Cortador de Grama Automatizado")
 
-# Criar um grid para visualizar a grama cortada
+# Fonte para exibir informações
+tamanho_fonte = 20
+fonte = pygame.font.Font(None, tamanho_fonte)
+
 grama_cortada = [[False for _ in range(LARGURA // TAMANHO_CORTADOR)] for _ in range(ALTURA // TAMANHO_CORTADOR)]
 
 # Classe do Cortador de Grama
 class Cortador:
-    def __init__(self):
+    def __init__(self, estacao_carga):
         self.core = Core(random.randint(0, LARGURA // TAMANHO_CORTADOR - 1) * TAMANHO_CORTADOR,
                          random.randint(0, ALTURA // TAMANHO_CORTADOR - 1) * TAMANHO_CORTADOR,
-                         2, True)
+                         2, True, 100)
         self.sensores = MockSensors()
         self.direcao = "RIGHT"
-        self.visitados = set()  # Conjunto para armazenar posições visitadas
+        self.visitados = set()
+        self.estacao_carga = estacao_carga
 
     def mover(self):
+        if self.core.bateria <= 10:
+            self.ir_para_estacao()
+            return
+
         self.visitados.add((self.core.x, self.core.y))
 
         if self.detectar_obstaculo():
@@ -55,6 +64,21 @@ class Cortador:
         self.core.y = max(0, min(self.core.y, ALTURA - TAMANHO_CORTADOR))
 
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
+        self.core.consumir_bateria()
+
+    def ir_para_estacao(self):
+        if (self.core.x, self.core.y) == self.estacao_carga:
+            self.core.recarregar_bateria()
+        else:
+            if self.core.x < self.estacao_carga[0]:
+                self.core.x += TAMANHO_CORTADOR
+            elif self.core.x > self.estacao_carga[0]:
+                self.core.x -= TAMANHO_CORTADOR
+
+            if self.core.y < self.estacao_carga[1]:
+                self.core.y += TAMANHO_CORTADOR
+            elif self.core.y > self.estacao_carga[1]:
+                self.core.y -= TAMANHO_CORTADOR
 
     def detectar_obstaculo(self):
         arestas = {
@@ -106,8 +130,11 @@ class Cortador:
 # Lista de obstáculos
 obstaculos = []
 
+# Estação de carga
+estacao_carga = (0, 0)
+
 # Inicializar o cortador
-cortador = Cortador()
+cortador = Cortador(estacao_carga)
 
 # Loop principal
 rodando = True
@@ -124,9 +151,15 @@ while rodando:
     for obstaculo in obstaculos:
         pygame.draw.rect(tela, COR_OBSTACULO, (obstaculo[0], obstaculo[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
+    pygame.draw.rect(tela, COR_ESTACAO, (estacao_carga[0], estacao_carga[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
+
     cortador.mover()
 
     pygame.draw.rect(tela, COR_CORTADOR, (cortador.core.x, cortador.core.y, TAMANHO_CORTADOR, TAMANHO_CORTADOR))
+
+    # Exibir informações da bateria
+    texto_bateria = fonte.render(f"Bateria: {cortador.core.bateria}%", True, COR_TEXTO)
+    tela.blit(texto_bateria, (10, 10))
 
     pygame.display.flip()
     clock.tick(10)

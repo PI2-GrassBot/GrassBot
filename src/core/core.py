@@ -1,18 +1,20 @@
 import random
 
 class Core:
-    def __init__(self, x: int, y: int, velocidade: int, power: bool):
+    def __init__(self, x: int, y: int, velocidade: int, power: bool, bateria: int):
         """
         Classe responsável pelo controle principal do cortador de grama.
         :param x: Posição X inicial do cortador.
         :param y: Posição Y inicial do cortador.
         :param velocidade: Velocidade de movimento do cortador.
         :param power: Estado ligado/desligado do cortador.
+        :param bateria: Nível inicial da bateria do cortador.
         """
         self.x = x
         self.y = y
         self.velocidade = velocidade
         self.power = power
+        self.bateria = bateria
 
     def ligar(self):
         """Liga o cortador."""
@@ -27,7 +29,7 @@ class Core:
         Move o cortador na direção especificada.
         :param direcao: Direção do movimento ("UP", "DOWN", "LEFT", "RIGHT").
         """
-        if not self.power:
+        if not self.power or self.bateria <= 0:
             return
 
         if direcao == "UP":
@@ -39,10 +41,21 @@ class Core:
         elif direcao == "RIGHT":
             self.x += self.velocidade
 
+        self.consumir_bateria()
+
     def get_posicao(self):
         """Retorna a posição atual do cortador."""
         return self.x, self.y
-        
+
+    def consumir_bateria(self):
+        """Reduz a bateria a cada movimento."""
+        if self.bateria > 0:
+            self.bateria -= 1
+
+    def recarregar_bateria(self):
+        """Recarrega a bateria do cortador."""
+        self.bateria = 100
+
     def recaucular_rota(self, sensores, direcao_atual=None):
         """
         Recalcula a rota do cortador baseado nos sensores.
