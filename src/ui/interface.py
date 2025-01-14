@@ -7,6 +7,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
+
 # Obtém a URL da API do .env
 API_URL = os.getenv("API_URL")
 

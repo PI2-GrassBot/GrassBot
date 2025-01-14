@@ -11,7 +11,7 @@ from core.core import Core
 from mock_sensors import MockSensors
 
 # Configurações iniciais
-LARGURA, ALTURA = 500, 500
+LARGURA, ALTURA = 600, 600
 TAMANHO_CORTADOR = 30
 COR_GRAMA = (34, 139, 34)  # Verde
 COR_CORTADOR = (255, 0, 0)  # Vermelho
@@ -33,56 +33,75 @@ class Cortador:
                          2, True)
         self.sensores = MockSensors()
         self.direcao = "RIGHT"
+        self.visitados = set()  # Conjunto para armazenar posições visitadas
 
     def mover(self):
-        self.core.mover(self.direcao)
-        if self.detectar_obstaculo():
-            self.direcao = self.core.recaucular_rota(self.sensores.avalia_ambiente())
-            self.sensores.set_all_sensors(False)
-        
+        self.visitados.add((self.core.x, self.core.y))
 
-        # Mantém dentro dos limites da tela
+        if self.detectar_obstaculo():
+            self.direcao = self.recaucular_rota()
+            self.sensores.set_all_sensors(False)
+
+        if self.direcao == "UP":
+            self.core.y -= TAMANHO_CORTADOR
+        elif self.direcao == "DOWN":
+            self.core.y += TAMANHO_CORTADOR
+        elif self.direcao == "LEFT":
+            self.core.x -= TAMANHO_CORTADOR
+        elif self.direcao == "RIGHT":
+            self.core.x += TAMANHO_CORTADOR
+
         self.core.x = max(0, min(self.core.x, LARGURA - TAMANHO_CORTADOR))
         self.core.y = max(0, min(self.core.y, ALTURA - TAMANHO_CORTADOR))
 
-        # Marca a grama como cortada
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
 
     def detectar_obstaculo(self):
-        """"
-        Veriica se alguma das arestas do cortador esta em contato com um obstaculo ou limite da tela e atualiza os sensores.
-        """
         arestas = {
-            "UP": (self.core.x, self.core.y),
+            "UP": (self.core.x, self.core.y - TAMANHO_CORTADOR),
             "DOWN": (self.core.x, self.core.y + TAMANHO_CORTADOR),
-            "LEFT": (self.core.x, self.core.y),
+            "LEFT": (self.core.x - TAMANHO_CORTADOR, self.core.y),
             "RIGHT": (self.core.x + TAMANHO_CORTADOR, self.core.y)
         }
 
+        obstaculo_detectado = False
 
-         # Verifica se a aresta do cortador está em contato com algum limite
         for direcao, aresta in arestas.items():
-           
-            if (aresta[1] == 0 and direcao == "UP"):
-                self.sensores.set_sensor(direcao, True)
-                print("Limite da tela detectado na direcao: ", direcao)
-            elif (aresta[1] == ALTURA - (TAMANHO_CORTADOR-TAMANHO_CORTADOR) and direcao == "DOWN"):
-                self.sensores.set_sensor(direcao, True)
-                print("Limite da tela detectado na direcao: ", direcao)
+            x, y = aresta
 
-            if (aresta[0] == 0 and direcao == "LEFT"):
+            if (x, y) in obstaculos:
                 self.sensores.set_sensor(direcao, True)
-                print("Limite da tela detectado na direcao: ", direcao)
-            elif (aresta[0] == LARGURA and direcao == "RIGHT"):
+                obstaculo_detectado = True
+
+            if x < 0 or x >= LARGURA or y < 0 or y >= ALTURA:
                 self.sensores.set_sensor(direcao, True)
-                print("Limite da tela detectado na direcao: ", direcao)
+                obstaculo_detectado = True
 
+        return obstaculo_detectado
 
-        if any(self.sensores.avalia_ambiente()):
-            return True
-        return False
-    
+    def recaucular_rota(self):
+        direcoes_possiveis = []
+        mapa_direcoes = {
+            "UP": (self.core.x, self.core.y - TAMANHO_CORTADOR),
+            "DOWN": (self.core.x, self.core.y + TAMANHO_CORTADOR),
+            "LEFT": (self.core.x - TAMANHO_CORTADOR, self.core.y),
+            "RIGHT": (self.core.x + TAMANHO_CORTADOR, self.core.y)
+        }
 
+        for direcao, posicao in mapa_direcoes.items():
+            x, y = posicao
+            if not self.sensores.get_sensor_status(direcao) and (x, y) not in self.visitados:
+                direcoes_possiveis.append((direcao, posicao))
+
+        if not direcoes_possiveis:
+            for direcao, posicao in mapa_direcoes.items():
+                if not self.sensores.get_sensor_status(direcao):
+                    direcoes_possiveis.append((direcao, posicao))
+
+        if direcoes_possiveis:
+            return direcoes_possiveis[0][0]
+
+        return "UP"
 
 # Lista de obstáculos
 obstaculos = []
@@ -97,32 +116,25 @@ clock = pygame.time.Clock()
 while rodando:
     tela.fill(COR_GRAMA)
 
-    # Desenhar a grama cortada
     for i in range(len(grama_cortada)):
         for j in range(len(grama_cortada[i])):
             if grama_cortada[i][j]:
                 pygame.draw.rect(tela, (144, 238, 144), (j * TAMANHO_CORTADOR, i * TAMANHO_CORTADOR, TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
-    # Desenhar obstáculos
     for obstaculo in obstaculos:
         pygame.draw.rect(tela, COR_OBSTACULO, (obstaculo[0], obstaculo[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
-    # Mover o cortador
     cortador.mover()
 
-    # Desenhar o cortador
     pygame.draw.rect(tela, COR_CORTADOR, (cortador.core.x, cortador.core.y, TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
-    # Atualizar tela
     pygame.display.flip()
-    clock.tick(10)  # Controla a velocidade da simulação
+    clock.tick(10)
 
-    # Eventos
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             rodando = False
         elif evento.type == pygame.MOUSEBUTTONDOWN:
-            # Adiciona um obstáculo na posição clicada pelo usuário
             mouse_x, mouse_y = evento.pos
             obstaculo_x = (mouse_x // TAMANHO_CORTADOR) * TAMANHO_CORTADOR
             obstaculo_y = (mouse_y // TAMANHO_CORTADOR) * TAMANHO_CORTADOR

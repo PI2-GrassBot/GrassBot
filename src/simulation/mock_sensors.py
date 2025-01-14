@@ -42,3 +42,20 @@ class MockSensors:
         self.sensorDown = estado
         self.sensorLeft = estado
         self.sensorRight = estado
+
+    def get_sensor_status(self, direcao):
+        """
+        Retorna o estado do sensor de uma direção específica.
+        :param direcao: Direção a ser consultada ("UP", "DOWN", "LEFT", "RIGHT").
+        :return: Estado do sensor (True para bloqueado, False para livre).
+        """
+        if direcao == "UP":
+            return self.sensorUP
+        elif direcao == "DOWN":
+            return self.sensorDown
+        elif direcao == "LEFT":
+            return self.sensorLeft
+        elif direcao == "RIGHT":
+            return self.sensorRight
+        else:
+            raise ValueError(f"Direção desconhecida: {direcao}")

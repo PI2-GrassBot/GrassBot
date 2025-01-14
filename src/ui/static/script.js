@@ -1,47 +1,65 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
+    const apiUrl = document.body.dataset.apiUrl;
+  
     const powerBtn = document.getElementById("power-btn");
-    const alturaCorte = document.getElementById("altura-corte");
-    const velocidade = document.getElementById("velocidade");
+    const alturaSelect = document.getElementById("altura-corte");
+    const velocidadeRange = document.getElementById("velocidade");
     const velocidadeValor = document.getElementById("velocidade-valor");
-
-    let ligado = false;
-
-    // Pegando a URL da API do atributo do body
-    const API_URL = document.body.getAttribute("data-api-url");
-
-    powerBtn.addEventListener("click", function () {
-        ligado = !ligado;
-        powerBtn.textContent = ligado ? "Desligar" : "Ligar";
-        powerBtn.classList.toggle("off", ligado);
-
-        fetch(`${API_URL}/ligar`, {
-            method: "POST",
-            body: JSON.stringify({ ligado }),
-            headers: { "Content-Type": "application/json" }
-        }).then(response => response.json())
-          .then(data => console.log("Resposta da API:", data))
-          .catch(error => console.error("Erro ao ligar/desligar:", error));
+  
+    // Atualizar visualização da velocidade
+    velocidadeRange.addEventListener("input", () => {
+      velocidadeValor.textContent = velocidadeRange.value;
     });
-
-    alturaCorte.addEventListener("change", function () {
-        fetch(`${API_URL}/altura_corte`, {
-            method: "POST",
-            body: JSON.stringify({ altura: alturaCorte.value }),
-            headers: { "Content-Type": "application/json" }
-        }).then(response => response.json())
-          .then(data => console.log("Resposta da API:", data))
-          .catch(error => console.error("Erro ao ajustar altura:", error));
+  
+    // Ligar/desligar o cortador
+    powerBtn.addEventListener("click", async () => {
+      const ligado = powerBtn.textContent === "Ligar";
+      try {
+        const response = await fetch(`${apiUrl}/power`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ligado }),
+        });
+        if (response.ok) {
+          powerBtn.textContent = ligado ? "Desligar" : "Ligar";
+        } else {
+          alert("Erro ao alterar o estado do cortador.");
+        }
+      } catch (error) {
+        console.error("Erro ao conectar à API:", error);
+      }
     });
-
-    velocidade.addEventListener("input", function () {
-        velocidadeValor.textContent = velocidade.value;
-
-        fetch(`${API_URL}/velocidade`, {
-            method: "POST",
-            body: JSON.stringify({ velocidade: parseInt(velocidade.value) }),
-            headers: { "Content-Type": "application/json" }
-        }).then(response => response.json())
-          .then(data => console.log("Resposta da API:", data))
-          .catch(error => console.error("Erro ao ajustar velocidade:", error));
+  
+    // Alterar altura do corte
+    alturaSelect.addEventListener("change", async () => {
+      try {
+        const response = await fetch(`${apiUrl}/altura_corte`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ altura: alturaSelect.value }),
+        });
+        if (!response.ok) {
+          alert("Erro ao alterar a altura do corte.");
+        }
+      } catch (error) {
+        console.error("Erro ao conectar à API:", error);
+      }
     });
-});
+  
+    // Alterar velocidade
+    velocidadeRange.addEventListener("change", async () => {
+      try {
+        const response = await fetch(`${apiUrl}/velocidade`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ velocidade: parseInt(velocidadeRange.value, 10) }),
+        });
+        if (!response.ok) {
+          alert("Erro ao alterar a velocidade.");
+        }
+      } catch (error) {
+        console.error("Erro ao conectar à API:", error);
+      }
+    });
+  });
+  
