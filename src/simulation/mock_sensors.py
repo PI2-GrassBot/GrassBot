@@ -1,61 +1,84 @@
+
+import pygame
+
 class MockSensors:
-    def __init__(self, sensorUp: bool = False, sensorDown: bool = False, sensorLeft: bool = False, sensorRight: bool = False):
+    def __init__(self, screen, tile_size, obstacles, concrete_zones):
         """
         Classe responsável por simular os sensores do cortador de grama.
-        :param sensorA: Estado do sensor A.
-        :param sensorB: Estado do sensor B.
-        :param sensorC: Estado do sensor C.
-        :param sensorD: Estado do sensor D.
+        :param screen: Tela do pygame para verificar cores em tempo real.
+        :param tile_size: Tamanho dos quadrados no mapa.
+        :param obstacles: Lista de coordenadas dos obstáculos.
+        :param concrete_zones: Lista de retângulos de zonas de concreto.
         """
-        self.sensorUP = sensorUp
-        self.sensorDown = sensorDown
-        self.sensorLeft = sensorLeft
-        self.sensorRight = sensorRight
+        self.screen = screen
+        self.tile_size = tile_size
+        self.obstacles = obstacles
+        self.concrete_zones = concrete_zones
 
-    def set_sensor(self, sensor: str, estado: bool):
+    def sensor_ultrassonico(self, x, y, direction):
         """
-        Define o estado de um sensor.
-        :param sensor: Sensor a ser alterado ("A", "B", "C" ou "D").
-        :param estado: Novo estado do sensor.
+        Simula o sensor ultrassônico detectando obstáculos diretamente à frente.
+        :param x: Posição atual no eixo X.
+        :param y: Posição atual no eixo Y.
+        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
+        :return: True se houver obstáculo diretamente à frente, False caso contrário.
         """
-        if sensor == "UP":
-            self.sensorUP = estado
-        elif sensor == "DOWN":
-            self.sensorDown = estado
-        elif sensor == "LEFT":
-            self.sensorLeft = estado
-        elif sensor == "RIGHT":
-            self.sensorRight = estado
-
-    def avalia_ambiente(self):
-        """
-        Retorna lista de sensores ativados.
-        """
-        return [self.sensorUP, self.sensorDown, self.sensorLeft, self.sensorRight]
-
-    def set_all_sensors(self, estado: bool):
-        """
-        Define o estado de todos os sensores.
-        :param estado: Novo estado dos sensores.
-        """
-        self.sensorUP = estado
-        self.sensorDown = estado
-        self.sensorLeft = estado
-        self.sensorRight = estado
-
-    def get_sensor_status(self, direcao):
-        """
-        Retorna o estado do sensor de uma direção específica.
-        :param direcao: Direção a ser consultada ("UP", "DOWN", "LEFT", "RIGHT").
-        :return: Estado do sensor (True para bloqueado, False para livre).
-        """
-        if direcao == "UP":
-            return self.sensorUP
-        elif direcao == "DOWN":
-            return self.sensorDown
-        elif direcao == "LEFT":
-            return self.sensorLeft
-        elif direcao == "RIGHT":
-            return self.sensorRight
+        if direction == "UP":
+            target = (x , y - (self.tile_size))
+        elif direction == "DOWN":
+            target = (x, y + (self.tile_size))
+        elif direction == "LEFT":
+            target = (x - (self.tile_size), y)
+        elif direction == "RIGHT":
+            target = (x + (self.tile_size), y)
         else:
-            raise ValueError(f"Direção desconhecida: {direcao}")
+            raise ValueError("Direção inválida.")
+
+        # Verifica apenas se o obstáculo está exatamente à frente
+        if target in self.obstacles:
+            print("Obstáculo detectado na direção", direction)
+            return True
+
+    
+    def get_sensor_status(self, x, y, direction):
+        """
+        Retorna True se houver um obstáculo na direção especificada, False caso contrário.
+        :param x: Posição atual no eixo X.
+        :param y: Posição atual no eixo Y.
+        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
+        """
+        return self.sensor_ultrassonico(x, y, direction)
+    
+    def set_all_sensors(self, status):
+        """
+        Define o status de todos os sensores.
+        :param status: Status a ser definido (True ou False).
+        """
+        pass
+
+    def sensor_cor(self, x, y, direction):
+    
+        """
+        Simula o sensor de cor detectando o tipo de piso diretamente à frente.
+        :param x: Posição atual no eixo X.
+        :param y: Posição atual no eixo Y.
+        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
+        :return: "Grama" se o piso for grama, "Concreto" se for concreto.
+        """
+        if direction == "UP":
+            target = (x, y - self.tile_size)
+        elif direction == "DOWN":
+            target = (x, y + self.tile_size)
+        elif direction == "LEFT":
+            target = (x - self.tile_size, y)
+        elif direction == "RIGHT":
+            target = (x + self.tile_size, y)
+        else:
+            raise ValueError("Direção inválida.")
+
+        # Verifica apenas o piso diretamente à frente
+        target_rect = pygame.Rect(target[0], target[1], self.tile_size, self.tile_size)
+        for zone in self.concrete_zones:
+            if zone.colliderect(target_rect):
+                return "Concreto"
+        return "Grama"
