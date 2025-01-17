@@ -1,16 +1,10 @@
-import sys
-import os
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
-
 from flask import Blueprint, request, jsonify
 from models.grassBot import GrassBot
 
 power_bp = Blueprint('power', __name__)
 
 
-@power_bp.route('/power', methods=['POST'])
+@power_bp.route('/ligar', methods=['POST'])
 def handle_power():
     try:
         data = request.get_json()
