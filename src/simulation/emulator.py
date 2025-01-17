@@ -41,10 +41,6 @@ class Cortador:
         self.estacao_carga = estacao_carga
 
     def mover(self):
-        if self.core.bateria <= 10:
-            self.ir_para_estacao()
-            return
-
         self.visitados.add((self.core.x, self.core.y))
 
         if self.detectar_obstaculo():
@@ -65,20 +61,6 @@ class Cortador:
 
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
         self.core.consumir_bateria()
-
-    def ir_para_estacao(self):
-        if (self.core.x, self.core.y) == self.estacao_carga:
-            self.core.recarregar_bateria()
-        else:
-            if self.core.x < self.estacao_carga[0]:
-                self.core.x += TAMANHO_CORTADOR
-            elif self.core.x > self.estacao_carga[0]:
-                self.core.x -= TAMANHO_CORTADOR
-
-            if self.core.y < self.estacao_carga[1]:
-                self.core.y += TAMANHO_CORTADOR
-            elif self.core.y > self.estacao_carga[1]:
-                self.core.y -= TAMANHO_CORTADOR
 
     def detectar_obstaculo(self):
         arestas = {
@@ -151,15 +133,15 @@ while rodando:
     for obstaculo in obstaculos:
         pygame.draw.rect(tela, COR_OBSTACULO, (obstaculo[0], obstaculo[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
-    pygame.draw.rect(tela, COR_ESTACAO, (estacao_carga[0], estacao_carga[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
+    # pygame.draw.rect(tela, COR_ESTACAO, (estacao_carga[0], estacao_carga[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
     cortador.mover()
 
     pygame.draw.rect(tela, COR_CORTADOR, (cortador.core.x, cortador.core.y, TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
     # Exibir informações da bateria
-    texto_bateria = fonte.render(f"Bateria: {cortador.core.bateria}%", True, COR_TEXTO)
-    tela.blit(texto_bateria, (10, 10))
+    # texto_bateria = fonte.render(f"Bateria: {cortador.core.bateria}%", True, COR_TEXTO)
+    # tela.blit(texto_bateria, (10, 10))
 
     pygame.display.flip()
     clock.tick(10)
