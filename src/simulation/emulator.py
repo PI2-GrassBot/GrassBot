@@ -60,8 +60,7 @@ class Cortador:
         self.core.y = max(0, min(self.core.y, ALTURA - TAMANHO_CORTADOR))
 
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
-        self.core.consumir_bateria()
-
+    
     def detectar_obstaculo(self):
         arestas = {
             "UP": (self.core.x, self.core.y - TAMANHO_CORTADOR),

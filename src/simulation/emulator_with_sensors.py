@@ -3,6 +3,8 @@ import random
 import sys
 import os
 
+from time import sleep
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
@@ -52,18 +54,25 @@ class Cortador:
         )
         self.direcao = "RIGHT"
         self.visitados = set()
+    
+    def velocidade(self):
+        sleep(1 - self.core.velocidade / 100)
+        return self.core.velocidade
 
     def mover(self):
-        self.visitados.add((self.core.x, self.core.y))
+        # self.visitados.add((self.core.x, self.core.y))
+        self.velocidade()
+        self.core.atualiza_comando()
 
+        while self.core.velocidade == 0 or not self.core.power:
+            self.core.atualiza_comando()
+            sleep(0.5)
         
         # Detectar obstáculo com o sensor ultrassônico
         if self.sensores.sensor_ultrassonico(self.core.x, self.core.y, self.direcao) or self.sensores.sensor_cor(self.core.x, self.core.y, self.direcao) == "Concreto":
-            # para o cortador e recaucula a rota
+            # para o cortador e recalcula a rota
             self.core.velocidade = 0
             self.direcao = self.recaucular_rota()
-
-
 
         if self.direcao == "UP":
             self.core.y -= TAMANHO_CORTADOR
@@ -77,10 +86,7 @@ class Cortador:
         self.core.x = max(0, min(self.core.x, LARGURA - TAMANHO_CORTADOR))
         self.core.y = max(0, min(self.core.y, ALTURA - TAMANHO_CORTADOR))
 
-     
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
-     
-    
         # self.core.consumir_bateria()
 
     def recaucular_rota(self):
@@ -109,9 +115,6 @@ class Cortador:
                 return direcao
             
 
-
-
-# Classe do Painel
 class Painel:
     def __init__(self, cortador, largura=PANEL_WIDTH, altura=ALTURA):
         self.largura = largura
@@ -178,8 +181,6 @@ while rodando:
     painel.desenhar()
     painel.atualizar()
 
-    
-    
     # Áreas de pisos de concreto no mapa
     pisos_concreto = [
         # Define aqui as coordenadas e dimensões dos blocos de concreto
@@ -192,7 +193,6 @@ while rodando:
     for piso in pisos_concreto:
         x, y, largura, altura = piso
         pygame.draw.rect(tela, COR_CONCRETO, (x, y, largura, altura))
-    
     
     # Cria obstcaulos ao redor do mapa
     for i in range(0, LARGURA, TAMANHO_CORTADOR):

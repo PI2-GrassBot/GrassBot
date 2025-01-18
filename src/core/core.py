@@ -34,6 +34,7 @@ class Core:
         :param direcao: Direção do movimento ("UP", "DOWN", "LEFT", "RIGHT").
         """
         if not self.power or self.bateria <= 0:
+            print("Cortador desligado ou sem bateria.")
             return
 
         if direcao == "UP":
