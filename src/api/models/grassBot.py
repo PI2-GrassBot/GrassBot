@@ -26,8 +26,8 @@ class GrassBot:
 
         if "ligado" in data:
             self.ligado = data["ligado"]
-        if "altura_corte" in data:
-            self.altura_corte = data["altura_corte"]
+        if "altura" in data:
+            self.altura_corte = data["altura"]
         if "velocidade" in data:
             self.velocidade = data["velocidade"]
 

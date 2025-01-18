@@ -21,6 +21,7 @@ def handle_altura_corte():
             }), 400
 
         database = GrassBot()
+        print(data)
         response = database.update(data=data)
 
         return jsonify(response), 200

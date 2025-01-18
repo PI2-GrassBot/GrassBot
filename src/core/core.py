@@ -1,7 +1,12 @@
-import random
+import json
+import os
+import sys
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 class Core:
-    def __init__(self, x: int, y: int, velocidade: int, power: bool, bateria: int, altura:int = 0):
+    def __init__(self, x: int, y: int):
         """
         Classe responsável pelo controle principal do cortador de grama.
         :param x: Posição X inicial do cortador.
@@ -12,10 +17,8 @@ class Core:
         """
         self.x = x
         self.y = y
-        self.velocidade = velocidade
-        self.power = power
-        self.bateria = bateria
-        self.altura = altura
+        self.atualiza_comando()
+
 
     def ligar(self):
         """Liga o cortador."""
@@ -42,16 +45,27 @@ class Core:
         elif direcao == "RIGHT":
             self.x += self.velocidade
 
-        self.consumir_bateria()
+        # self.consumir_bateria()
+
+    def atualiza_comando(self):
+
+        with open('src/api/data/data.json') as f:
+            data = json.load(f)
+
+        self.power = data['ligado']            
+        self.velocidade = data['velocidade']
+        self.altura = data['altura_corte']
+
+        return self.power, self.velocidade, self.altura
 
     def get_posicao(self):
         """Retorna a posição atual do cortador."""
         return self.x, self.y
 
-    def consumir_bateria(self):
-        """Reduz a bateria a cada movimento."""
-        if self.bateria > 0:
-            self.bateria -= 1
+    # def consumir_bateria(self):
+    #     """Reduz a bateria a cada movimento."""
+    #     if self.bateria > 0:
+    #         self.bateria -= 1
 
     def recarregar_bateria(self):
         """Recarrega a bateria do cortador."""

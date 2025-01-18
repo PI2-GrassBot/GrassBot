@@ -34,10 +34,11 @@ grama_cortada = [[False for _ in range(LARGURA // TAMANHO_CORTADOR)] for _ in ra
 
 # Classe do Cortador de Grama
 class Cortador:
-    def __init__(self, estacao_carga):
-        self.core = Core(random.randint(1, LARGURA // TAMANHO_CORTADOR - 2) * TAMANHO_CORTADOR,
-                         random.randint(1, ALTURA // TAMANHO_CORTADOR - 2) * TAMANHO_CORTADOR,
-                         1, True, 100)
+    def __init__(self):
+        self.core = Core(
+            random.randint(1, LARGURA // TAMANHO_CORTADOR - 2) * TAMANHO_CORTADOR,
+            random.randint(1, ALTURA // TAMANHO_CORTADOR - 2) * TAMANHO_CORTADOR
+            )
         
         self.sensores = MockSensors(
             screen=tela,
@@ -51,7 +52,6 @@ class Cortador:
         )
         self.direcao = "RIGHT"
         self.visitados = set()
-  
 
     def mover(self):
         self.visitados.add((self.core.x, self.core.y))
@@ -81,7 +81,7 @@ class Cortador:
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
      
     
-        self.core.consumir_bateria()
+        # self.core.consumir_bateria()
 
     def recaucular_rota(self):
         direcao_atual = self.direcao
@@ -115,22 +115,20 @@ class Cortador:
 class Painel:
     def __init__(self, cortador, largura=PANEL_WIDTH, altura=ALTURA):
         self.largura = largura
-        self.altura = altura
+        self.altura = altura  # Use diretamente o parâmetro ALTURA
         self.cortador = cortador
         self.velocidade = cortador.core.velocidade
-        self.altura = cortador.core.altura
+        self.altura_cortador = cortador.core.altura  # Use um nome separado
         self.power = cortador.core.power
 
         self.sensor_ultrassonico = cortador.sensores.sensor_ultrassonico(cortador.core.x, cortador.core.y, cortador.direcao)
-
         self.sensor_cor = cortador.sensores.sensor_cor(cortador.core.x, cortador.core.y, cortador.direcao)
- 
 
     def desenhar(self):
-        # Desenhar o painel a esquerda da tela
-        pygame.draw.rect(tela, (0,0,0), (LARGURA, 0, self.largura, self.altura))
+        if not isinstance(self.largura, (int, float)) or not isinstance(self.altura, (int, float)):
+            raise ValueError("A largura e a altura do painel devem ser números.")
 
-        # Exibir informações do cortador
+        pygame.draw.rect(tela, (0, 0, 0), (LARGURA, 0, self.largura, self.altura))
 
         texto_posicao = fonte.render(f"Posição: ({self.cortador.core.x // TAMANHO_CORTADOR}, {self.cortador.core.y // TAMANHO_CORTADOR})", True, COR_TEXTO)
         tela.blit(texto_posicao, (LARGURA + 10, 10))
@@ -138,33 +136,23 @@ class Painel:
         texto_velocidade = fonte.render(f"Velocidade: {self.velocidade}", True, COR_TEXTO)
         tela.blit(texto_velocidade, (LARGURA + 10, 40))
 
-        texto_altura = fonte.render(f"Altura: {self.altura}", True, COR_TEXTO)
+        texto_altura = fonte.render(f"Altura: {self.altura_cortador}", True, COR_TEXTO)
         tela.blit(texto_altura, (LARGURA + 10, 70))
 
         texto_power = fonte.render(f"Power: {self.power}", True, COR_TEXTO)
         tela.blit(texto_power, (LARGURA + 10, 100))
 
-        # Exibir informações dos sensores
         texto_sensor_ultrassonico = fonte.render(f"Sensor Ultrassônico: {self.sensor_ultrassonico}", True, COR_TEXTO)
         tela.blit(texto_sensor_ultrassonico, (LARGURA + 10, 130))
 
         texto_sensor_cor = fonte.render(f"Sensor de Cor: {self.sensor_cor}", True, COR_TEXTO)
         tela.blit(texto_sensor_cor, (LARGURA + 10, 160))
 
-
-
-    
     def atualizar(self):
-        # Atualizar informações do cortador
-        self.velocidade = self.cortador.core.velocidade
-        self.altura = self.cortador.core.altura
-        self.power = self.cortador.core.power
+        self.power, self.velocidade, self.altura_cortador = self.cortador.core.atualiza_comando()        
 
-        # Atualizar informações dos sensores
-        self.sensor_ultrassonico = self.cortador.sensores.sensor_ultrassonico (self.cortador.core.x, self.cortador.core.y, self.cortador.direcao)
+        self.sensor_ultrassonico = self.cortador.sensores.sensor_ultrassonico(self.cortador.core.x, self.cortador.core.y, self.cortador.direcao)
         self.sensor_cor = self.cortador.sensores.sensor_cor(self.cortador.core.x, self.cortador.core.y, self.cortador.direcao)
-
-
 
 
 # Lista de obstáculos
@@ -174,7 +162,7 @@ obstaculos = []
 estacao_carga = (0, 0)
 
 # Inicializar o cortador
-cortador = Cortador(estacao_carga)
+cortador = Cortador()
 painel = Painel(cortador)
 
 # Loop principal
@@ -215,8 +203,6 @@ while rodando:
         obstaculos.append((LARGURA - TAMANHO_CORTADOR, i))
     
     
-
-
     for i in range(len(grama_cortada)):
         for j in range(len(grama_cortada[i])):
             if grama_cortada[i][j]:
