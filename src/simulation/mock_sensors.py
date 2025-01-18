@@ -1,4 +1,3 @@
-
 import pygame
 
 class MockSensors:
@@ -36,49 +35,43 @@ class MockSensors:
 
         # Verifica apenas se o obstáculo está exatamente à frente
         if target in self.obstacles:
-            print("Obstáculo detectado na direção", direction)
             return True
+        return False
 
-    
-    def get_sensor_status(self, x, y, direction):
+    def sensor_cor(self, x, y):
         """
-        Retorna True se houver um obstáculo na direção especificada, False caso contrário.
+        Simula o sensor de cor detectando o tipo de piso na posição atual.
         :param x: Posição atual no eixo X.
         :param y: Posição atual no eixo Y.
-        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
-        """
-        return self.sensor_ultrassonico(x, y, direction)
-    
-    def set_all_sensors(self, status):
-        """
-        Define o status de todos os sensores.
-        :param status: Status a ser definido (True ou False).
-        """
-        pass
-
-    def sensor_cor(self, x, y, direction):
-    
-        """
-        Simula o sensor de cor detectando o tipo de piso diretamente à frente.
-        :param x: Posição atual no eixo X.
-        :param y: Posição atual no eixo Y.
-        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
         :return: "Grama" se o piso for grama, "Concreto" se for concreto.
         """
-        if direction == "UP":
-            target = (x, y - self.tile_size)
-        elif direction == "DOWN":
-            target = (x, y + self.tile_size)
-        elif direction == "LEFT":
-            target = (x - self.tile_size, y)
-        elif direction == "RIGHT":
-            target = (x + self.tile_size, y)
-        else:
-            raise ValueError("Direção inválida.")
-
-        # Verifica apenas o piso diretamente à frente
-        target_rect = pygame.Rect(target[0], target[1], self.tile_size, self.tile_size)
+        target_rect = pygame.Rect(x, y, self.tile_size, self.tile_size)
         for zone in self.concrete_zones:
             if zone.colliderect(target_rect):
                 return "Concreto"
         return "Grama"
+
+    def get_data(self, x, y):
+        """
+        Retorna dados dos sensores, incluindo posição e tipo de cada célula adjacente.
+        :param x: Posição atual no eixo X.
+        :param y: Posição atual no eixo Y.
+        :return: Lista de dicionários com informações de cada célula adjacente.
+        """
+        directions = ["UP", "DOWN", "LEFT", "RIGHT"]
+        data = []
+
+        for direction in directions:
+            if direction == "UP":
+                pos = (x, y - self.tile_size)
+            elif direction == "DOWN":
+                pos = (x, y + self.tile_size)
+            elif direction == "LEFT":
+                pos = (x - self.tile_size, y)
+            elif direction == "RIGHT":
+                pos = (x + self.tile_size, y)
+            
+            tipo = "Obstáculo" if pos in self.obstacles else self.sensor_cor(pos[0], pos[1])
+            data.append({"posicao": pos, "tipo": tipo})
+
+        return data

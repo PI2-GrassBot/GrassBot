@@ -53,6 +53,7 @@ class Cortador:
             ]
         )
         self.direcao = "RIGHT"
+        self.mapa = {}
         self.visitados = set()
     
     def velocidade(self):
@@ -69,7 +70,7 @@ class Cortador:
             sleep(0.5)
         
         # Detectar obstáculo com o sensor ultrassônico
-        if self.sensores.sensor_ultrassonico(self.core.x, self.core.y, self.direcao) or self.sensores.sensor_cor(self.core.x, self.core.y, self.direcao) == "Concreto":
+        if self.sensores.sensor_ultrassonico(self.core.x, self.core.y, self.direcao) or self.sensores.sensor_cor(self.core.x, self.core.y) == "Concreto":
             # para o cortador e recalcula a rota
             self.core.velocidade = 0
             self.direcao = self.recaucular_rota()
@@ -89,31 +90,145 @@ class Cortador:
         grama_cortada[self.core.y // TAMANHO_CORTADOR][self.core.x // TAMANHO_CORTADOR] = True
         # self.core.consumir_bateria()
 
-    def recaucular_rota(self):
-        direcao_atual = self.direcao
-        if direcao_atual == "UP":
-            direcoes = ["LEFT", "RIGHT", "DOWN"]
-        elif direcao_atual == "DOWN":
-            direcoes = ["LEFT", "RIGHT", "UP"]
-        elif direcao_atual == "LEFT":
-            direcoes = ["UP", "DOWN", "RIGHT"]
-        elif direcao_atual == "RIGHT":
-            direcoes = ["UP", "DOWN", "LEFT"]
+    # def recaucular_rota(self):
+    #     direcao_atual = self.direcao
+    #     if direcao_atual == "UP":
+    #         direcoes = ["LEFT", "RIGHT", "DOWN"]
+    #     elif direcao_atual == "DOWN":
+    #         direcoes = ["LEFT", "RIGHT", "UP"]
+    #     elif direcao_atual == "LEFT":
+    #         direcoes = ["UP", "DOWN", "RIGHT"]
+    #     elif direcao_atual == "RIGHT":
+    #         direcoes = ["UP", "DOWN", "LEFT"]
         
-        for direcao in direcoes:
-            if direcao == "UP":
-                x, y = self.core.x, self.core.y - TAMANHO_CORTADOR
-            elif direcao == "DOWN":
-                x, y = self.core.x, self.core.y + TAMANHO_CORTADOR
-            elif direcao == "LEFT":
-                x, y = self.core.x - TAMANHO_CORTADOR, self.core.y
-            elif direcao == "RIGHT":
-                x, y = self.core.x + TAMANHO_CORTADOR, self.core.y
+    #     for direcao in direcoes:
+    #         if direcao == "UP":
+    #             x, y = self.core.x, self.core.y - TAMANHO_CORTADOR
+    #         elif direcao == "DOWN":
+    #             x, y = self.core.x, self.core.y + TAMANHO_CORTADOR
+    #         elif direcao == "LEFT":
+    #             x, y = self.core.x - TAMANHO_CORTADOR, self.core.y
+    #         elif direcao == "RIGHT":
+    #             x, y = self.core.x + TAMANHO_CORTADOR, self.core.y
             
-            # verfificar se x,y esta em self.visitados ou obstaculos
-            if (x, y) not in obstaculos:
-                return direcao
-            
+    #         # verfificar se x,y esta em self.visitados ou obstaculos
+    #         if (x, y) not in obstaculos:
+    #             return direcao
+
+
+    def recaucular_rota(self):
+        """
+        Recalcula a rota do cortador utilizando um algoritmo baseado em SLAM.
+        """
+        # Atualizar o mapa com os dados dos sensores
+        sensor_data = self.sensores.get_data(self.core.x, self.core.y)
+        #print(sensor_data)
+        self.mapa = self.atualizar_mapa(sensor_data)
+
+        # Definir o objetivo: encontrar a próxima célula de grama não cortada
+        objetivo = self.encontrar_objetivo()
+        print (objetivo)
+
+        while objetivo:
+        # Planejar a rota até o objetivo
+            rota = self.planejar_rota(self.core.posicao_atual, objetivo)
+            if rota:
+                # Atualizar a direção com base na próxima etapa da rota
+                proximo_passo = rota[0]
+                self.direcao = self.converter_passo_em_direcao(proximo_passo)
+                break
+            else:
+                # Se não conseguir planejar rota para o objetivo atual, encontrar um novo objetivo
+                objetivo = self.encontrar_objetivo()
+        return self.direcao
+
+    def atualizar_mapa(self, sensor_data):
+        """
+        Atualiza o mapa do ambiente com base nos dados do sensor.
+        """
+        for dado in sensor_data:
+            posicao = dado['posicao']
+            tipo = dado['tipo']
+            self.mapa[posicao] = tipo  # Atualiza a célula no mapa com o tipo (obstáculo, grama, etc.)
+        return self.mapa
+
+    def encontrar_objetivo(self):
+        """
+        Encontra a célula de grama não cortada mais próxima.
+        """
+        for posicao, tipo in self.mapa.items():
+            if tipo == 'Grama' and posicao not in self.visitados:
+                return posicao
+        return None  
+
+    def planejar_rota(self, inicio, objetivo):
+        """
+        Planeja uma rota do ponto inicial ao objetivo usando o algoritmo A*.
+        """
+        # Implementação básica do A*
+        from heapq import heappop, heappush
+
+        def heuristica(p1, p2):
+            # Distância de Manhattan
+            return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+        fronteira = []
+        heappush(fronteira, (0, inicio))
+        caminhos = {inicio: None}
+        custo_ate_agora = {inicio: 0}
+
+        while fronteira:
+            _, atual = heappop(fronteira)
+
+            if atual == objetivo:
+                # Reconstruir o caminho
+                caminho = []
+                while atual:
+                    caminho.append(atual)
+                    atual = caminhos[atual]
+                return caminho[::-1]
+
+            for vizinho in self.get_vizinhos(atual):
+                novo_custo = custo_ate_agora[atual] + 1  # Custo uniforme
+                if vizinho not in custo_ate_agora or novo_custo < custo_ate_agora[vizinho]:
+                    custo_ate_agora[vizinho] = novo_custo
+                    prioridade = novo_custo + heuristica(vizinho, objetivo)
+                    heappush(fronteira, (prioridade, vizinho))
+                    caminhos[vizinho] = atual
+
+        return None  # Sem caminho disponível
+    
+    def get_vizinhos(self, pos):
+        """
+        Retorna os vizinhos válidos (células adjacentes) da posição fornecida.
+        """
+        x, y = pos
+        vizinhos = [
+            (x, y - 1),  # Acima
+            (x, y + 1),  # Abaixo
+            (x - 1, y),  # Esquerda
+            (x + 1, y)   # Direita
+        ]
+        # Filtra vizinhos que estão dentro do mapa e não são obstáculos
+        return [v for v in vizinhos if self.mapa.get(v) != 'Obstáculo']
+
+
+    def converter_passo_em_direcao(self, passo):
+        """
+        Converte um passo no mapa para uma direção (UP, DOWN, LEFT, RIGHT).
+        """
+        dx, dy = passo[0] - self.core.posicao_atual[0], passo[1] - self.core.posicao_atual[1]
+        print(dx, dy)
+        if dx == 0 and dy == -1:
+            return "UP"
+        elif dx == 0 and dy == 1:
+            return "DOWN"
+        elif dx == -1 and dy == 0:
+            return "LEFT"
+        elif dx == 1 and dy == 0:
+            return "RIGHT"
+        return self.direcao  # Retorna a direção atual se nenhuma outra se aplicar
+
 
 class Painel:
     def __init__(self, cortador, largura=PANEL_WIDTH, altura=ALTURA):
@@ -125,7 +240,7 @@ class Painel:
         self.power = cortador.core.power
 
         self.sensor_ultrassonico = cortador.sensores.sensor_ultrassonico(cortador.core.x, cortador.core.y, cortador.direcao)
-        self.sensor_cor = cortador.sensores.sensor_cor(cortador.core.x, cortador.core.y, cortador.direcao)
+        self.sensor_cor = cortador.sensores.sensor_cor(cortador.core.x, cortador.core.y)
 
     def desenhar(self):
         if not isinstance(self.largura, (int, float)) or not isinstance(self.altura, (int, float)):
@@ -155,7 +270,7 @@ class Painel:
         self.power, self.velocidade, self.altura_cortador = self.cortador.core.atualiza_comando()        
 
         self.sensor_ultrassonico = self.cortador.sensores.sensor_ultrassonico(self.cortador.core.x, self.cortador.core.y, self.cortador.direcao)
-        self.sensor_cor = self.cortador.sensores.sensor_cor(self.cortador.core.x, self.cortador.core.y, self.cortador.direcao)
+        self.sensor_cor = self.cortador.sensores.sensor_cor(self.cortador.core.x, self.cortador.core.y)
 
 
 # Lista de obstáculos

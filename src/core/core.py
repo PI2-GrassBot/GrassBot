@@ -18,6 +18,7 @@ class Core:
         self.x = x
         self.y = y
         self.atualiza_comando()
+        self.posicao_atual = (self.x, self.y)
 
 
     def ligar(self):
