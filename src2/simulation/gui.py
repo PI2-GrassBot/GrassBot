@@ -13,22 +13,27 @@ class Gui():
     placing_blocks: bool
     removing_blocks: bool
     cut_speed: int
+    cut_height: int
+    pause: bool
 
 
     def __init__(self, coords):
         self.grid_size = 15
-        self.box_width = WIDTH/self.grid_size
+        self.box_width = WIDTH/15
         self.coords = coords
         self.placing_blocks = False
         self.removing_blocks = False
         self.cut_speed = 15
+        self.cut_height = 1
+        self.pause = True
+        self.status = "Aguardando"
 
         self.coords.maze = [
             [0 for _ in range(self.grid_size)]
             for __ in range(self.grid_size)]
 
         pygame.init()
-        self.window = pygame.display.set_mode((WIDTH, WIDTH))
+        self.window = pygame.display.set_mode((WIDTH+300, WIDTH))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption(GAME_TITLE)
 
@@ -54,6 +59,7 @@ class Gui():
 
         self.event_handle(is_running)
         self.redraw()
+        self.panel_status()
         pygame.display.update()
         
 
@@ -138,19 +144,19 @@ class Gui():
     def redraw(self):
         self.window.fill(GRASS)
         self.draw_points()
-        self.draw_grid()
+        # self.draw_grid()
 
 
     def draw_grid(self):
         for i in range(self.grid_size-1):
             pygame.draw.rect(
                 self.window,
-                BLACK,
+                WHITE,
                 ((i+1)*self.box_width-2, 0, 5, WIDTH)
             )
             pygame.draw.rect(
                 self.window,
-                BLACK,
+                WHITE,
                 (0, (i+1)*self.box_width-2, WIDTH, 5)
             )
 
@@ -228,6 +234,7 @@ class Gui():
 
 
     def run_algorithm(self):
+        self.status = "Em execução"
         self.placing_blocks = False
         self.removing_blocks = False
         self.coords.clear_cut()
@@ -240,3 +247,19 @@ class Gui():
                 self,
                 self.coords,
             )
+        self.status = "Completo"
+
+    def panel_status(self):
+        pygame.draw.rect(self.window, PANEL_COLOR, (WIDTH, 0, 300, WIDTH))
+        info = [
+            f"Velocidade: {self.cut_speed}",
+            f"Altura: {self.cut_height}",
+            f"Status: {self.status}",
+        ]
+
+        for i, text in enumerate(info):
+            font = pygame.font.Font(None, 36)
+            text = font.render(text, True, WHITE)
+            self.window.blit(text, (WIDTH + 10, 10 + i*40))
+
+        pygame.display.update()
