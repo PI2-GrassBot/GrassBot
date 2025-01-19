@@ -5,6 +5,7 @@ import json
 from simulation.drawer import Coordinates
 from core.graph_search import dfs
 from consts import *
+from time import sleep
 
 
 class Gui():
@@ -28,7 +29,7 @@ class Gui():
         self.cut_height = 1
         self.pause = True
         self.status = "Aguardando"
-
+        self.running = False
         self.coords.maze = [
             [0 for _ in range(self.grid_size)]
             for __ in range(self.grid_size)]
@@ -77,11 +78,11 @@ class Gui():
     def power(self, running):
         json_data = self.read_event_by_api()
         if json_data:
-            if json_data["ligado"] and not running and self.status == "Aguardando":
-                running = True
+            if json_data["ligado"] and not running:
+                self.running = True
                 self.run_algorithm()
             elif json_data["ligado"] and self.status == "Completo":
-                running = False
+                self.running = False
                 json_data["ligado"] = False
                 with open("../GrassBot/src/api/data/data.json", "w") as file:
                     json.dump(json_data, file)
@@ -94,12 +95,13 @@ class Gui():
         checkpoint_keys = set("1")
         clear_field_keys = set("x")
         clear_cut_keys = set("z")
-        # random_blocks_keys = set(" ")
-        # speed_up_keys = set(["+", "="])
-        # slow_down_keys = set("-")
         stop_cutter_keys = set("p")
 
         json_data = self.read_event_by_api()
+
+        while not json_data["ligado"] and self.running:
+            sleep(1)
+            json_data = self.read_event_by_api()
         if json_data["map"]:
             self.coords.generate_random_obstacles(self)
             json_data["map"] = False
@@ -282,6 +284,12 @@ class Gui():
                 self.coords,
             )
         self.status = "Completo"
+        json_data = self.read_event_by_api()
+        json_data["ligado"] = False
+        self.running = False
+        with open("../GrassBot/src/api/data/data.json", "w") as file:
+            json.dump(json_data, file)
+
 
     def panel_status(self):
         pygame.draw.rect(self.window, PANEL_COLOR, (WIDTH, 0, 300, WIDTH))
