@@ -1,5 +1,6 @@
 from typing import Tuple
 import pygame
+import json
 
 from simulation.drawer import Coordinates
 from core.graph_search import dfs
@@ -57,22 +58,67 @@ class Gui():
             elif self.removing_blocks == True:
                 self.remove()
 
-        self.event_handle(is_running)
+        power = self.power(is_running)
+        self.event_handle(power)
         self.redraw()
         self.panel_status()
         pygame.display.update()
-        
+
+    def read_event_by_api(self):
+        path = "../GrassBot/src/api/data/data.json"
+        try:
+            with open(path, "r") as file:
+                data = json.load(file)
+                return data
+        except Exception as e:
+            print(e)
+            return
+
+    def power(self, running):
+        json_data = self.read_event_by_api()
+        if json_data:
+            if json_data["ligado"] and not running and self.status == "Aguardando":
+                running = True
+                self.run_algorithm()
+            elif json_data["ligado"] and self.status == "Completo":
+                running = False
+                json_data["ligado"] = False
+                with open("../GrassBot/src/api/data/data.json", "w") as file:
+                    json.dump(json_data, file)
+        return running
+
+
 
     def event_handle(self, running):
-        run_keys = set("q")
+        run_keys = set("")
         checkpoint_keys = set("1")
         clear_field_keys = set("x")
         clear_cut_keys = set("z")
-        random_blocks_keys = set(" ")
-        speed_up_keys = set(["+", "="])
-        slow_down_keys = set("-")
+        # random_blocks_keys = set(" ")
+        # speed_up_keys = set(["+", "="])
+        # slow_down_keys = set("-")
         stop_cutter_keys = set("p")
 
+        json_data = self.read_event_by_api()
+        if json_data["map"]:
+            self.coords.generate_random_obstacles(self)
+            json_data["map"] = False
+            with open("../GrassBot/src/api/data/data.json", "w") as file:
+                json.dump(json_data, file)
+        if json_data["speed_up"]:
+            if self.cut_speed <= 2:
+                self.cut_speed = 2
+            else:
+                self.cut_speed = int(self.cut_speed * 0.5) + 1
+
+            json_data["speed_up"] = False
+            with open("../GrassBot/src/api/data/data.json", "w") as file:
+                json.dump(json_data, file)
+        if json_data["speed_down"]:
+            self.cut_speed = int(self.cut_speed * 2) + 1
+            json_data["speed_down"] = False
+            with open("../GrassBot/src/api/data/data.json", "w") as file:
+                json.dump(json_data, file)
         for event in pygame.event.get():
             try:
                 if event.type == pygame.QUIT:
@@ -94,18 +140,6 @@ class Gui():
 
                         elif key in checkpoint_keys:
                             self.place_start()
-
-                        elif key in random_blocks_keys:
-                            self.coords.generate_random_obstacles(self)
-
-                    if key in speed_up_keys and self.cut_speed > 0:
-                        if self.cut_speed <= 2:
-                            self.cut_speed = 2
-                        else:
-                            self.cut_speed = int(self.cut_speed * 0.5) + 1
-
-                    elif key in slow_down_keys:
-                        self.cut_speed = int(self.cut_speed * 2) + 1
 
                     elif key in stop_cutter_keys:
                         # Altera o estado de is_running no singleton

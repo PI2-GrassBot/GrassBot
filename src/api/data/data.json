@@ -1,5 +1,1 @@
-{
-    "ligado": true,
-    "altura_corte": "alta",
-    "velocidade": 70
-}
+{"ligado": false, "altura_corte": "alta", "velocidade": 90, "speed_up": false, "speed_down": false, "map": false}

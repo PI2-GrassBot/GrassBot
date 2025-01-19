@@ -48,7 +48,7 @@ def dfs(maze, start, gui, coords: Coordinates):
                 ]
                 if False in pass_list:
                     continue
-          
+
                 for i, open_check in enumerate(open_list):
                     if neighbor == open_check:
                         open_list.pop(i)
