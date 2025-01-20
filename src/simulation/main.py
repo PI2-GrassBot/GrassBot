@@ -48,10 +48,17 @@ class Cortador:
             tile_size=TAMANHO_CORTADOR,
             obstacles=obstaculos,
             concrete_zones=[
-                pygame.Rect(200, 100, 100, 300),  # Um bloco retangular de concreto
-                pygame.Rect(400, 200, 200, 100),  # Outro bloco retangular
+                # Áreas de concreto no mapa - blocos de tamanho multiple de TAMANHO_CORTADOR
+                pygame.Rect(180, 90, 150, 300),
+                pygame.Rect(600, 300, 150, 150)
             ]
         )
+
+        # inclui concrete zone na lista de obstaculos
+        for zone in self.sensores.concrete_zones:
+            for i in range(zone.x, zone.x + zone.width, TAMANHO_CORTADOR):
+                for j in range(zone.y, zone.y + zone.height, TAMANHO_CORTADOR):
+                    obstaculos.append((i, j))
         self.direcao = "RIGHT"
         self.mapa = {}
         self.visitados = set()
@@ -295,14 +302,11 @@ while rodando:
 
     # Áreas de pisos de concreto no mapa
     pisos_concreto = [
-        (200, 100, 100, 300),  # Um bloco retangular de concreto
-        (400, 200, 200, 100),  # Outro bloco retangular
+        (180, 90, 150, 300),  # Um bloco retangular de concreto
+        (600, 300, 150, 150),  # Outro bloco retangular de concreto
     ]
     
-    # Desenhar os blocos de concreto
-    for piso in pisos_concreto:
-        x, y, largura, altura = piso
-        pygame.draw.rect(tela, COR_CONCRETO, (x, y, largura, altura))
+
     
     # Cria obstáculos ao redor do mapa
     for i in range(0, LARGURA, TAMANHO_CORTADOR):
@@ -319,6 +323,11 @@ while rodando:
 
     for obstaculo in obstaculos:
         pygame.draw.rect(tela, COR_OBSTACULO, (obstaculo[0], obstaculo[1], TAMANHO_CORTADOR, TAMANHO_CORTADOR))
+
+    # Desenhar os blocos de concreto
+    for piso in pisos_concreto:
+        x, y, largura, altura = piso
+        pygame.draw.rect(tela, COR_CONCRETO, (x, y, largura, altura))
 
     cortador.mover()
 
