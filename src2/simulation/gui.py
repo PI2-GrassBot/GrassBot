@@ -295,7 +295,7 @@ class Gui():
     def panel_status(self):
         pygame.draw.rect(self.window, PANEL_COLOR, (WIDTH, 0, 300, WIDTH))
         info = [
-            f"Velocidade: {self.cut_speed}",
+            f"Velocidade: {round(1/self.cut_speed + 0.93,2)}",
             f"Altura: {self.cut_height}",
             f"Status: {self.status}",
         ]
