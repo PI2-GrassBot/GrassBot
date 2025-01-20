@@ -86,6 +86,7 @@ class Gui():
                 json_data["ligado"] = False
                 with open("../GrassBot/src/api/data/data.json", "w") as file:
                     json.dump(json_data, file)
+            self.cut_height = json_data.get("altura_corte", self.cut_height)
         return running
 
 
@@ -98,7 +99,7 @@ class Gui():
         stop_cutter_keys = set("p")
 
         json_data = self.read_event_by_api()
-
+        self.cut_height = json_data.get("altura_corte", self.cut_height)
         while not json_data["ligado"] and self.running:
             sleep(1)
             json_data = self.read_event_by_api()

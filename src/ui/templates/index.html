@@ -12,28 +12,33 @@
 
   <body data-api-url="{{ api_url }}">
     <header>
+      <div class="header-content">
         <img src="{{ url_for('static', filename='../static/logo.jpeg') }}" alt="GrassBot" />
+        <h1>Painel do Cortador de Grama</h1>
+      </div>
     </header>
 
-    <div class="panel">
-
+    <main class="panel">
       <button id="power-btn">Ligar</button>
 
-      <div>
+      <div class="control-group">
         <label for="altura-corte">Altura do Corte:</label>
         <select id="altura-corte">
           <option value="baixa">Baixa</option>
-          <option value="média" selected>Média</option>
+          <option value="média">Média</option>
           <option value="alta">Alta</option>
         </select>
       </div>
 
-      <div>
-        <label for="velocidade">Velocidade:</label>
-        <input type="range" id="velocidade" min="0" max="100" value="50" />
-        <span id="velocidade-valor">50</span>
+      <div class="control-group">
+        <label for="velocidade">Velocidade do Cortador:</label>
+        <div class="velocidade-controls">
+          <button id="diminuir-velocidade">-</button>
+          <button id="aumentar-velocidade">+</button>
+        </div>
       </div>
-    </div>
+    </main>
+    <button id="mostrar-mapa">Mostrar Mapa</button>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
   </body>
