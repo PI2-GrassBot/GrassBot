@@ -9,6 +9,8 @@ from time import sleep
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
+from core.core import Core
+from simulation.mock_sensors import MockSensors
 
 # Configurações iniciais
 PANEL_WIDTH = 300
@@ -223,22 +225,30 @@ class Painel:
         # self.sensor_cor = cortador.sensores.sensor_cor(cortador.core.x, cortador.core.y)
 
     def desenhar(self):
+
+       
+        
+
         if not isinstance(self.largura, (int, float)) or not isinstance(self.altura, (int, float)):
             raise ValueError("A largura e a altura do painel devem ser números.")
 
         pygame.draw.rect(tela, (0, 0, 0), (LARGURA, 0, self.largura, self.altura))
+         # desenha logo do projeto
+        logo = pygame.image.load("../GrassBot/src/ui/static/logo.jpeg")
+        logo = pygame.transform.scale(logo, (300, 300))
+        tela.blit(logo, (900, 0))
 
         texto_posicao = fonte.render(f"Posição: ({self.cortador.core.x // TAMANHO_CORTADOR}, {self.cortador.core.y // TAMANHO_CORTADOR})", True, COR_TEXTO)
-        tela.blit(texto_posicao, (LARGURA + 10, 10))
+        tela.blit(texto_posicao, (LARGURA + 10, 310))
 
         texto_velocidade = fonte.render(f"Velocidade: {self.velocidade}", True, COR_TEXTO)
-        tela.blit(texto_velocidade, (LARGURA + 10, 40))
+        tela.blit(texto_velocidade, (LARGURA + 10, 340))
 
         texto_altura = fonte.render(f"Altura: {self.altura_cortador}", True, COR_TEXTO)
-        tela.blit(texto_altura, (LARGURA + 10, 70))
+        tela.blit(texto_altura, (LARGURA + 10, 370))
 
         texto_power = fonte.render(f"Power: {self.power}", True, COR_TEXTO)
-        tela.blit(texto_power, (LARGURA + 10, 100))
+        tela.blit(texto_power, (LARGURA + 10, 400))
 
         # texto_sensor_ultrassonico = fonte.render(f"Sensor Ultrassônico: {self.sensor_ultrassonico}", True, COR_TEXTO)
         # tela.blit(texto_sensor_ultrassonico, (LARGURA + 10, 130))
@@ -253,136 +263,6 @@ class Painel:
         # self.sensor_cor = self.cortador.sensores.sensor_cor(self.cortador.core.x, self.cortador.core.y)
 
 
-class Core:
-    def __init__(self, x: int, y: int):
-        """
-        Classe responsável pelo controle principal do cortador de grama.
-        :param x: Posição X inicial do cortador.
-        :param y: Posição Y inicial do cortador.
-        :param velocidade: Velocidade de movimento do cortador.
-        :param power: Estado ligado/desligado do cortador.
-        :param bateria: Nível inicial da bateria do cortador.
-        """
-        self.x = x
-        self.y = y
-        self.atualiza_comando()
-        self.posicao_atual = (self.x, self.y)
-
-
-    def ligar(self):
-        """Liga o cortador."""
-        self.power = True
-
-    def desligar(self):
-        """Desliga o cortador."""
-        self.power = False
-
-    
-
-    def atualiza_comando(self):
-
-        with open('src/api/data/data.json') as f:
-            data = json.load(f)
-
-        self.power = data['ligado']            
-        self.velocidade = data['velocidade']
-        self.altura = data['altura_corte']
-
-        return self.power, self.velocidade, self.altura
-
-    def get_posicao(self):
-        """Retorna a posição atual do cortador."""
-        return self.x, self.y
-
-class MockSensors:
-    def __init__(self, screen, tile_size, obstacles, concrete_zones):
-        """
-        Classe responsável por simular os sensores do cortador de grama.
-        :param screen: Tela do pygame para verificar cores em tempo real.
-        :param tile_size: Tamanho dos quadrados no mapa.
-        :param obstacles: Lista de coordenadas dos obstáculos.
-        :param concrete_zones: Lista de retângulos de zonas de concreto.
-        """
-        self.screen = screen
-        self.tile_size = tile_size
-        self.obstacles = obstacles
-        self.concrete_zones = concrete_zones
-
-    def sensor_ultrassonico(self, x, y, direction):
-        """
-        Simula o sensor ultrassônico detectando obstáculos na direção especificada.
-        :param x: Posição atual no eixo X.
-        :param y: Posição atual no eixo Y.
-        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
-        :return: True se houver obstáculo diretamente à frente, False caso contrário.
-        """
-        if direction == "UP":
-            target = (x, y - self.tile_size)
-        elif direction == "DOWN":
-            target = (x, y + self.tile_size)
-        elif direction == "LEFT":
-            target = (x - self.tile_size, y)
-        elif direction == "RIGHT":
-            target = (x + self.tile_size, y)
-        else:
-            raise ValueError("Direção inválida.")
-
-        # Verifica se o obstáculo está na direção especificada
-        return target in self.obstacles
-
-    def sensor_cor(self, x, y, direction):
-        """
-        Simula o sensor de cor detectando o tipo de piso na direção especificada.
-        :param x: Posição atual no eixo X.
-        :param y: Posição atual no eixo Y.
-        :param direction: Direção para verificar ("UP", "DOWN", "LEFT", "RIGHT").
-        :return: "Grama" se o piso for grama, "Concreto" se for concreto.
-        """
-        direcoes_validas = ["UP", "DOWN", "LEFT", "RIGHT"]
-        if direction not in direcoes_validas:
-            raise ValueError(f"Direção inválida: {direction}")
-
-        if direction == "UP":
-            target = (x, y - self.tile_size)
-        elif direction == "DOWN":
-            target = (x, y + self.tile_size)
-        elif direction == "LEFT":
-            target = (x - self.tile_size, y)
-        elif direction == "RIGHT":
-            target = (x + self.tile_size, y)
-        else:
-            raise ValueError("Direção inválida.")
-
-        target_rect = pygame.Rect(target[0], target[1], self.tile_size, self.tile_size)
-        for zone in self.concrete_zones:
-            if zone.colliderect(target_rect):
-                return "Concreto"
-        return "Grama"
-
-    def get_data(self, x, y):
-        """
-        Retorna dados dos sensores, incluindo posição e tipo de cada célula adjacente.
-        :param x: Posição atual no eixo X.
-        :param y: Posição atual no eixo Y.
-        :return: Lista de dicionários com informações de cada célula adjacente.
-        """
-        directions = ["UP", "DOWN", "LEFT", "RIGHT"]
-        data = []
-
-        for direction in directions:
-            if direction == "UP":
-                pos = (x, y - self.tile_size)
-            elif direction == "DOWN":
-                pos = (x, y + self.tile_size)
-            elif direction == "LEFT":
-                pos = (x - self.tile_size, y)
-            elif direction == "RIGHT":
-                pos = (x + self.tile_size, y)
-
-            tipo = "Obstáculo" if self.sensor_ultrassonico(x, y, direction) else self.sensor_cor(x, y, direction)
-            data.append({"direcao": direction, "posicao": pos, "tipo": tipo})
-
-        return data
 
 # Lista de obstáculos
 obstaculos = []
