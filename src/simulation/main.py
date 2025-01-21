@@ -324,7 +324,7 @@ while rodando:
     pygame.draw.rect(tela, COR_CORTADOR, (cortador.core.x, cortador.core.y, TAMANHO_CORTADOR, TAMANHO_CORTADOR))
 
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(30)
 
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
