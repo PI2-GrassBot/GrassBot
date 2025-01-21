@@ -85,9 +85,10 @@ class Cortador:
         self.core.atualiza_comando()
 
         # Aguarda até que o cortador esteja ligado e com velocidade
+
         while self.core.velocidade == 0 or not self.core.power:
             self.core.atualiza_comando()
-            sleep(0.5)
+            return
 
         # Detecta obstáculos ou áreas de concreto usando os sensores
         dados_sensores = self.sensores.get_data(self.core.x, self.core.y)
@@ -124,12 +125,6 @@ class Cortador:
 
         # Adiciona a nova posição aos visitados
         self.visitados.add((self.core.x, self.core.y))
-
-
-
-
-
-
 
 
     def recaucular_rota(self):
@@ -171,8 +166,6 @@ class Cortador:
 
         # Caso nenhuma direção válida seja encontrada, busca a célula de grama mais próxima
         return self.buscar_grama_mais_proxima()
-
-
 
     def buscar_grama_mais_proxima(self):
         """
@@ -233,14 +226,11 @@ class Painel:
 
     def desenhar(self):
 
-       
-        
-
         if not isinstance(self.largura, (int, float)) or not isinstance(self.altura, (int, float)):
             raise ValueError("A largura e a altura do painel devem ser números.")
 
         pygame.draw.rect(tela, (0, 0, 0), (LARGURA, 0, self.largura, self.altura))
-         # desenha logo do projeto
+        # desenha logo do projeto
         logo = pygame.image.load("../GrassBot/src/ui/static/logo.jpeg")
         logo = pygame.transform.scale(logo, (300, 300))
         tela.blit(logo, (900, 0))
@@ -297,8 +287,8 @@ while rodando:
     tela.fill(COR_GRAMA)
 
     # Desenhar o painel
-    painel.desenhar()
     painel.atualizar()
+    painel.desenhar()
 
     # Áreas de pisos de concreto no mapa
     pisos_concreto = [
